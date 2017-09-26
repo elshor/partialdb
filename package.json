@@ -1,0 +1,24 @@
+{
+  "name": "partialdb",
+  "version": "0.1.1",
+  "description": "A couchdb based database that stores and loads json objects, patches differences when there is a version conflict and in general allows handling of partial documents",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Elchanan Shor",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "clone": "^2.1.1",
+    "cookie": "^0.3.1",
+    "jsonpath": "^0.2.12",
+    "lru-cache": "^4.1.1",
+    "rfc6902": "^1.3.0",
+    "timeout-as-promise": "^1.0.0",
+    "yargs": "^9.0.1"
+  },
+  "devDependencies": {
+    "tap": "^10.7.2"
+  }
+}

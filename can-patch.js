@@ -11,7 +11,7 @@ module.exports = function(original,patches,options){
 		return {
 			code:401,
 			friendly:'User does not have permission to update the document',
-			techie:`Owner is ${original.$meta.owner} and current userid is ${options.userid}. No AC: list is available`
+			techie:`Owner is ${original.$meta.owner} and current userid is ${options.userid}. No ACL list is available`
 		};
 	}
 	//iterate over acl list and search for possible allow

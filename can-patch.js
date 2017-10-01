@@ -8,7 +8,11 @@ module.exports = function(original,patches,options){
 	}
 	if(!Array.isArray(original.$meta.acl)){
 		//no acl list - no permission to update the document
-		return {code:401,friendly:'User does not have permission to update the document'};
+		return {
+			code:401,
+			friendly:'User does not have permission to update the document',
+			techie:`Owner is ${original.$meta.owner} and current userid is ${options.userid}. No AC: list is available`
+		};
 	}
 	//iterate over acl list and search for possible allow
 	let acl = original.$meta.acl;
@@ -18,7 +22,7 @@ module.exports = function(original,patches,options){
 			return {
 				code: 401,
 				friendly:'User does not have permission to update the document',
-				techie: patches[i]
+				techie: `userid is ${options.userid}, patch is ${JSON.stringify(patches[i])}. No matching ACL rule was found`
 			};
 		}
 	}

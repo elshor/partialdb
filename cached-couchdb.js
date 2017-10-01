@@ -15,9 +15,21 @@ const canPatch = require('./triggers/can-patch');
 const canDelete = require('./triggers/can-delete');
 
 module.exports = class CachedCouchdb{
+	/**
+	 * Create a new couchdb connection
+	 * @param {object} options options for connecting to the database
+	 * @param options.username  the couchdb username
+	 * @param options.password  the couchdb password
+	 * @param options.plugin  A plugin object with function to execute on different triggers
+	 * @param options.plugin.beforePatch
+	 * @param options.plugin.afterPatch
+	 * @param options.plugin.canPatch
+	 * @param options.plugin.canDelete
+	 */
 	constructor(options){
 		this.username = options.username;
 		this.password = options.password;
+		this.plugin = options.plugin || {};
 		this.url = options.url;
 		if(!globalCache[options.url]){
 			initializeDB(options);
@@ -25,7 +37,28 @@ module.exports = class CachedCouchdb{
 		this.cache = globalCache[options.url].cache;
 		this.revCache = globalCache[options.url].revCache;
 	}
-
+	beforePatch(original,patches,options){
+		beforePatch(original,patches,options);
+		if(typeof this.plugin.beforePatch === 'function'){
+			this.plugin.beforePatch(original,pathes,options);
+		}
+	}
+	afterPatch(original,patches,options,db){
+		afterPatch(original,patches,options,db);
+		if(typeof this.plugin.afterPatch === 'function'){
+			this.plugin.afterPatch(original,patches,options,db);
+		}
+	}
+	canPatch(original, patches, options,db){
+		return canPatch(original,patches,options,db) ||
+		(typeof this.plugin.canPatch === 'function'?
+			this.plugin.canPatch(original,pathes,options,db):undefined);
+	}
+	canDelete(original, options,db){
+		return canDelete(original,options,db) ||
+		(typeof this.plugin.canDelete === 'function'?
+			this.plugin.canDelete(original,options,db):undefined);
+	}
 	load(id){
 		if(!id){
 			return Promise.resolve(undefined);
@@ -78,8 +111,8 @@ module.exports = class CachedCouchdb{
 				let original = current || clone(doc);//if load returned a doc then it is the original
 				let patches = diff(original,doc);//find diff from original (doc already contains the changes)
 				doc._rev = current? current._rev : undefined;
-				beforePatch(original,patches,options);
-				let response = canPatch(original,patches,options);
+				this.beforePatch(original,patches,options);
+				let response = this.canPatch(original,patches,options);
 				if(response){
 					//can patch returned an error - reject promise with the error object
 					return Promise.reject(response);
@@ -93,7 +126,7 @@ module.exports = class CachedCouchdb{
 					original._id = res.data.id;
 					original._rev = res.data.rev;
 					invalidate(this.url,res.data.id,res.data.rev);
-					afterPatch(original,patches,options,this);
+					this.afterPatch(original,patches,options,this);
 					return original;
 				}).catch((err)=>{
 					if(err && err.response && err.response.status === 409){
@@ -107,8 +140,8 @@ module.exports = class CachedCouchdb{
 				return this.loadRev(doc._id,doc._rev)
 				.then((original)=>{
 					let differences = diff(original,doc);
-					beforePatch(doc,differences,options);
-					let response = canPatch(doc,differences,options);
+					this.beforePatch(doc,differences,options);
+					let response = this.canPatch(doc,differences,options);
 					if(response){
 						//can patch returned an error - reject promise with the error object
 						return Promise.reject(response);
@@ -126,7 +159,7 @@ module.exports = class CachedCouchdb{
 			if(!doc){
 				return Promise.reject({code:404,message:"The document was not found"});
 			}
-			let denial = canDelete(doc,options,this);
+			let denial = this.canDelete(doc,options,this);
 			if(denial){
 				return Promise.reject(denial);
 			}

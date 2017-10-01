@@ -5,7 +5,7 @@ const db = new couchdb(config);
 var docid = null;
 var other = null;
 t.test('save new document and then retrieve it',(t)=>{
-	t.plan(14);
+	t.plan(16);
 	return db.store({title:'my object'}).then((doc)=>{
 		t.ok(doc,'store returns object');
 		t.ok(doc._id,'id field is created');
@@ -46,7 +46,17 @@ t.test('save new document and then retrieve it',(t)=>{
 		return db.load(docid);
 	}).then((doc5)=>{
 		t.notOk(doc5,'after delete object should not exist');
-	});
+	}).then(()=>{
+		return db.store({_id:'given-name',a:1});
+	}).then(()=>db.load('given-name'))
+	.then((doc)=>{
+		t.equal(doc.a,1,'store document with given name');
+	}).then(()=>{
+		return db.store({_id:'given-name',a:2});
+	}).then(()=>db.load('given-name'))
+	.then((doc)=>{
+		t.equal(doc.a,2,'updating a document without its revision stores information correctly');
+	}).then(()=>db.delete('given-name'));
 });
 
 

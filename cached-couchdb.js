@@ -9,9 +9,10 @@ const rfc6902 = require('rfc6902');
 const patch = rfc6902.applyPatch;
 const globalCache = {};
 const Updater = require('./doc-updater');
-const beforePatch = require('./before-patch');
+const beforePatch = require('./triggers/before-patch');
 const afterPatch = require('./triggers/after-patch');
-const canPatch = require('./can-patch');
+const canPatch = require('./triggers/can-patch');
+const canDelete = require('./triggers/can-delete');
 
 module.exports = class CachedCouchdb{
 	constructor(options){

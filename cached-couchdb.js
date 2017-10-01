@@ -141,12 +141,22 @@ module.exports = class CachedCouchdb{
 		});
 	}
 	getByIndex(indexName, key,options){
+		let startKey = [indexName || 'all'];
+		let endKey = [indexName || 'all'];
+		if(Array.isArray(key)){
+			startKey.push.apply(startKey,key);
+			endKey.push.apply(endKey,key);
+		}else if(key !== undefined){
+			startKey.push(key);
+			endKey.push(key);
+		}
+		endKey.push({});//the object be the last (assuming keys are text or numbers but not objects)
 		return axios.get(INDEX_VIEW,{
 			baseURL : this.url,
 			auth : {username:this.username, password:this.password},
 			params:{
-				startkey:JSON.stringify([indexName||'all',key===undefined?null : key]),
-				endkey:JSON.stringify([indexName||'all',key===undefined?{}:key])
+				startkey:JSON.stringify(startKey),
+				endkey:JSON.stringify(endKey)
 			}
 		}).then((res)=>{
 			return Promise.all(res.data.rows.map((doc)=>this.load(doc.value,options)));
@@ -192,6 +202,5 @@ function errorHandler(err){
 	let code = err.response? err.response.status : (err.code ||500);
 	let friendly = err.response? err.response.statusText : (err.friendly || 'An unknown error occured');
 	let techie = err.response? err.response.body : (err.code? err.code : err);
-	//console.error('ERROR',code,friendly,techie);
 	return  Promise.reject({code:code,techie:techie,friendly:friendly});
 }

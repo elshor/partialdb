@@ -120,11 +120,15 @@ module.exports = class CachedCouchdb{
 		}).catch(errorHandler);
 	}
 	
-	delete(id){
+	delete(id,options){
 		id = (typeof id === 'object')? id._id : id;
 		return this.load(id).then((doc)=>{
 			if(!doc){
 				return Promise.reject({code:404,message:"The document was not found"});
+			}
+			let denial = canDelete(doc,options,this);
+			if(denial){
+				return Promise.reject(denial);
 			}
 			return axios.delete(encodeURIComponent(id),{
 				baseURL : this.url,

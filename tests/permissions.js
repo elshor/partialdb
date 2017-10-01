@@ -5,7 +5,7 @@ const db = new couchdb(config);
 var docid = null;
 var thedoc = null;
 t.test('test permissions',(t)=>{
-	t.plan(11);
+	t.plan(13);
 	return db.store({title:'just testing'},{userid:'dummy'})
 	.then((doc)=>{
 		docid = doc._id;
@@ -59,6 +59,17 @@ t.test('test permissions',(t)=>{
 		doc.y = 7;
 		return db.store(doc,{userid:'dummy3'})
 			.then((doc)=>t.fail('store from user dummy3 should fail',doc))
-			.catch((err)=>t.equal(err.code,401,'dummy3 cannot modify document'));
+			.catch((err)=>t.equal(err.code,401,'dummy3 cannot modify document'))
+			.then(()=>doc);
+	}).then((doc)=>{
+		let docid = doc._id;
+		return db.delete(doc,{userid:'dummy1'})
+		.then(()=>t.fail('dummy1 should not be able to delete a document owned by dummy'))
+		.catch(()=>t.pass('dummy1 should not be able to delete a document owned by dummy'))
+		.then(()=>docid);
+	}).then((docid)=>{
+		return db.delete(docid,{userid:'dummy'})
+		.then(()=>t.pass('dummy should  be able to delete its own document'))
+		.catch((err)=>t.fail('dummy should  be able to delete its own document'));
 	});
 });

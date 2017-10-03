@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "es6",
+    "target": "ES6"
+  },
+  "files": [
+    "diff.ts",
+    "equal.ts",
+    "errors.ts",
+    "index.ts",
+    "patch.ts",
+    "pointer.ts"
+  ]
+}

@@ -5,14 +5,25 @@ const MAX_CONFLICT_RETRY = 20;
 const INDEX_VIEW = '_design/indexes/_view/view';
 const Cache = require("lru-cache");
 const clone = require('clone');
-const rfc6902 = require('rfc6902');
-const patch = rfc6902.applyPatch;
+const rfc6902 = require('./rfc6902');
 const globalCache = {};
 const Updater = require('./doc-updater');
 const beforePatch = require('./triggers/before-patch');
 const afterPatch = require('./triggers/after-patch');
 const canPatch = require('./triggers/can-patch');
 const canDelete = require('./triggers/can-delete');
+
+function patch(obj,patches){
+	try{
+		return rfc6902.applyPatch(obj,patches);
+	}catch(e){
+		throw {
+			techie:e.stack,
+			friendly:'Failed to patch document',
+			code:400
+		};
+	}
+}
 
 module.exports = class CachedCouchdb{
 	/**
@@ -200,7 +211,16 @@ module.exports = class CachedCouchdb{
 			patches = [patches];
 		}
 		return this.load(id,options).then((doc)=>{
-			patch(doc,patches);
+			let  response = patch(doc,patches);
+			for(let i=0;i<response.length;++i){
+				if(response[i]){
+					consnole.log('ERR',response[i]);
+					return Promise.reject({
+						code:400,
+						friendly:'There was an error patching the document - patch path "' + response[i].path + '" ${response[i].name}',
+						techie:JSON.stringify(patches)});
+				}
+			}
 			return this.store(doc,options);
 		});
 	}

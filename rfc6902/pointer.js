@@ -69,7 +69,7 @@ export class Pointer {
             }
             //if shouldCreate and the next object is missing then create it as an object
             if (parent[token] === undefined && i < (l - 1) && shouldCreate) {
-                if (this.tokens[i + 1] === '-') {
+                if (this.tokens[i + 1] === '-' || !isNaN(parseInt(this.tokens[i+1],10))) {
                     parent[token] = [];
                 }
                 else {
